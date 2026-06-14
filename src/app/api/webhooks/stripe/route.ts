@@ -4,7 +4,7 @@ import Stripe from 'stripe'
 import { supabaseAdmin } from '@/utils/supabase/admin'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-04-10', // using a recent valid API version
+  apiVersion: '2026-05-27.dahlia', // using a recent valid API version
 })
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
