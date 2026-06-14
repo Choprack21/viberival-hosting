@@ -1,6 +1,35 @@
 'use client';
+import { useEffect, useState, useTransition } from 'react';
+import { createClient } from '@/utils/supabase/client';
+import { openCustomerPortal } from './actions';
 
 export default function DashboardBilling() {
+  const [servers, setServers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const fetchServers = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from('servers').select('*');
+      if (data) {
+        setServers(data);
+      }
+      setIsLoading(false);
+    };
+    fetchServers();
+  }, []);
+
+  const handleOpenPortal = () => {
+    startTransition(async () => {
+      try {
+        await openCustomerPortal();
+      } catch (err: any) {
+        alert(err.message);
+      }
+    });
+  };
+
   return (
     <div>
       <div className="mb-8">
@@ -20,79 +49,51 @@ export default function DashboardBilling() {
               Active Subscriptions
             </h3>
             
-            <div className="bg-[#0C1018] rounded-lg p-5 border border-[#1E2538] flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-1">
-                  <h4 className="font-bold text-white">16GB Game VPS</h4>
-                  <span className="bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Active</span>
-                </div>
-                <p className="text-xs text-gray-500">Renews on July 14, 2026</p>
+            {isLoading ? (
+              <div className="text-gray-500 animate-pulse">Loading subscriptions...</div>
+            ) : servers.length === 0 ? (
+              <div className="text-gray-500 text-sm">You do not have any active subscriptions.</div>
+            ) : (
+              <div className="space-y-4">
+                {servers.map((server) => (
+                  <div key={server.id} className="bg-[#0C1018] rounded-lg p-5 border border-[#1E2538] flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-bold text-white">{server.name}</h4>
+                        <span className="bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Active</span>
+                      </div>
+                      <p className="text-xs text-gray-500">Plan: {server.plan}</p>
+                    </div>
+                    
+                    <div className="flex items-center gap-6">
+                      <button 
+                        onClick={handleOpenPortal}
+                        disabled={isPending}
+                        className="bg-[#1E2538] hover:bg-[#2A344B] disabled:opacity-50 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors border border-[#2A344B]"
+                      >
+                        {isPending ? 'Loading...' : 'Manage'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              
-              <div className="flex items-center gap-6">
-                <div className="text-right">
-                  <div className="text-lg font-bold text-white">$29.99</div>
-                  <div className="text-[10px] text-gray-500 uppercase tracking-wider">Per Month</div>
-                </div>
-                <button 
-                  onClick={() => alert("This will open the Stripe Customer Portal to cancel or upgrade your plan.")}
-                  className="bg-[#1E2538] hover:bg-[#2A344B] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors border border-[#2A344B]"
-                >
-                  Manage
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Payment History */}
-          <div className="bg-[#10141F] border border-[#1E2538] rounded-xl p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-white mb-4">Payment History</h3>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="text-gray-500 text-xs uppercase tracking-wider border-b border-[#1E2538]">
-                    <th className="pb-3 font-medium">Date</th>
-                    <th className="pb-3 font-medium">Description</th>
-                    <th className="pb-3 font-medium">Amount</th>
-                    <th className="pb-3 font-medium text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="text-gray-300">
-                  <tr className="border-b border-[#1E2538]/50">
-                    <td className="py-4">Jun 14, 2026</td>
-                    <td className="py-4 text-white">16GB Game VPS (Monthly)</td>
-                    <td className="py-4">$29.99</td>
-                    <td className="py-4 text-right">
-                      <span className="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs">Paid</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Payment Method */}
+        {/* Payment Method & Portal */}
         <div className="space-y-6">
           <div className="bg-[#10141F] border border-[#1E2538] rounded-xl p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-white mb-4">Payment Method</h3>
-            
-            <div className="bg-[#0C1018] rounded-lg p-4 border border-[#1E2538] flex items-center gap-4 mb-4">
-              <div className="w-12 h-8 bg-white rounded border border-gray-300 flex items-center justify-center">
-                <span className="text-blue-600 font-black italic text-xs">VISA</span>
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-bold text-white">•••• 4242</div>
-                <div className="text-xs text-gray-500">Expires 12/28</div>
-              </div>
-            </div>
-
+            <h3 className="text-lg font-bold text-white mb-4">Billing Portal</h3>
+            <p className="text-sm text-gray-400 mb-6">
+              Update your payment methods, download past invoices, and manage your billing information securely through Stripe.
+            </p>
             <button 
-              onClick={() => alert("This will open Stripe Elements to securely update your credit card on file.")}
-              className="w-full bg-[#1E2538] hover:bg-[#2A344B] text-white text-sm font-semibold py-2.5 rounded-lg transition-colors border border-[#2A344B]"
+              onClick={handleOpenPortal}
+              disabled={isPending}
+              className="w-full bg-[#635BFF] hover:bg-[#5249EC] disabled:opacity-50 text-white text-sm font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
-              Update Payment Method
+              {isPending ? 'Opening Stripe...' : 'Open Stripe Customer Portal'}
             </button>
           </div>
 
@@ -102,15 +103,9 @@ export default function DashboardBilling() {
               <span className="text-indigo-400">🔒</span>
               <h3 className="text-sm font-bold text-indigo-300">Secure Payments</h3>
             </div>
-            <p className="text-xs text-indigo-200/70 leading-relaxed mb-4">
+            <p className="text-xs text-indigo-200/70 leading-relaxed">
               Your billing information is securely processed by Stripe. We do not store your credit card details on our servers.
             </p>
-            <button 
-              onClick={() => alert("This will redirect you to the official Stripe Customer Portal where users manage their own invoices.")}
-              className="w-full bg-[#635BFF] hover:bg-[#5249EC] text-white text-sm font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              Open Stripe Customer Portal
-            </button>
           </div>
         </div>
 
