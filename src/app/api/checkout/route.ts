@@ -27,11 +27,14 @@ export async function POST(req: Request) {
               images: ['https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Server-multiple.svg/1024px-Server-multiple.svg.png'],
             },
             unit_amount: Math.round(price * 100), // Stripe expects cents
+            recurring: {
+              interval: 'month',
+            },
           },
           quantity: 1,
         },
       ],
-      mode: 'payment',
+      mode: 'subscription',
       success_url: `${req.headers.get('origin')}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get('origin')}/`,
     });
