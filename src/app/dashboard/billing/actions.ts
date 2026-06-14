@@ -17,18 +17,23 @@ export async function openCustomerPortal() {
       return { error: 'Not authenticated' };
     }
 
-    // Find the Stripe customer by email
-    const customers = await stripe.customers.search({
-      query: `email:'${user.email}'`,
-      limit: 1,
-    });
+    // Fetch the user's servers to get a subscription ID
+    const { data: servers } = await supabase
+      .from('servers')
+      .select('stripe_subscription_id')
+      .eq('user_id', user.id)
+      .not('stripe_subscription_id', 'is', null)
+      .limit(1);
 
-    if (customers.data.length === 0) {
-      // If they haven't bought anything yet, they won't have a Stripe customer record
-      return { error: 'No billing history found for your email. Please make sure you used the same email during checkout.' };
+    if (!servers || servers.length === 0) {
+      return { error: 'No billing history found. Please make sure you used the same email during checkout.' };
     }
 
-    const customerId = customers.data[0].id;
+    const subId = servers[0].stripe_subscription_id;
+    
+    // Retrieve the subscription from Stripe to get the customer ID
+    const subscription = await stripe.subscriptions.retrieve(subId);
+    const customerId = subscription.customer as string;
 
     // Create a Stripe Customer Portal session
     const session = await stripe.billingPortal.sessions.create({
