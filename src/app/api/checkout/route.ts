@@ -7,10 +7,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
   try {
-    const { planId, price, name, userId } = await req.json();
+    const { planId, price, name, userId, userEmail } = await req.json();
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      customer_email: userEmail || undefined,
       metadata: {
         userId: userId,
         planId: planId,

@@ -17,6 +17,7 @@ function CheckoutContent() {
   const planPrice = parseFloat(searchParams.get('price') || '29.99');
 
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   React.useEffect(() => {
@@ -24,7 +25,10 @@ function CheckoutContent() {
       const { createClient } = await import('@/utils/supabase/client');
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) setUserId(user.id);
+      if (user) {
+        setUserId(user.id);
+        setUserEmail(user.email || null);
+      }
       setIsCheckingUser(false);
     };
     fetchUser();
@@ -48,6 +52,7 @@ function CheckoutContent() {
           price: planPrice,
           name: planName,
           userId: userId,
+          userEmail: userEmail,
         }),
       });
 
