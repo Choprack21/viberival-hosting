@@ -23,7 +23,12 @@ export default function DashboardBilling() {
   const handleOpenPortal = () => {
     startTransition(async () => {
       try {
-        await openCustomerPortal();
+        const res = await openCustomerPortal();
+        if (res.error) {
+          alert(res.error);
+        } else if (res.url) {
+          window.location.href = res.url;
+        }
       } catch (err: any) {
         alert(err.message);
       }

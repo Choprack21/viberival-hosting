@@ -9,31 +9,37 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function openCustomerPortal() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user || !user.email) {
-    throw new Error('Not authenticated');
+    if (!user || !user.email) {
+      return { error: 'Not authenticated' };
+    }
+
+    // Find the Stripe customer by email
+    const customers = await stripe.customers.search({
+      query: `email:'${user.email}'`,
+      limit: 1,
+    });
+
+    if (customers.data.length === 0) {
+      // If they haven't bought anything yet, they won't have a Stripe customer record
+      return { error: 'No billing history found for your email. Please make sure you used the same email during checkout.' };
+    }
+
+    const customerId = customers.data[0].id;
+
+    // Create a Stripe Customer Portal session
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `https://viberival-hosting.vercel.app/dashboard/billing`,
+    });
+
+    return { url: session.url };
+  } catch (err: any) {
+    console.error(err);
+    // This catches Stripe errors like "portal not configured"
+    return { error: err.message || 'An unknown error occurred with Stripe.' };
   }
-
-  // Find the Stripe customer by email
-  const customers = await stripe.customers.search({
-    query: `email:'${user.email}'`,
-    limit: 1,
-  });
-
-  if (customers.data.length === 0) {
-    // If they haven't bought anything yet, they won't have a Stripe customer record
-    throw new Error('No billing history found. Please purchase a server first.');
-  }
-
-  const customerId = customers.data[0].id;
-
-  // Create a Stripe Customer Portal session
-  const session = await stripe.billingPortal.sessions.create({
-    customer: customerId,
-    return_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/dashboard/billing`,
-  });
-
-  redirect(session.url);
 }
