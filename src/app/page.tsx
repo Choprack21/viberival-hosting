@@ -155,19 +155,11 @@ export default function Home() {
              </Link>
           </div>
 
-          <div className="mt-6 bg-yellow-500/10 border border-yellow-500/30 p-4 rounded-lg flex items-start gap-3">
-            <span className="text-yellow-400 text-lg">⚠️</span>
-            <div>
-              <h4 className="text-yellow-400 font-bold text-sm">High Demand Waitlist</h4>
-              <p className="text-yellow-200/70 text-xs mt-1">Due to an unexpected surge in demand, all new server deployments are currently on a 48-hour waitlist. Pre-order now to secure your slot.</p>
-            </div>
-          </div>
-
           <Link 
             href={`/checkout?id=${selectedPlan.id}&name=Game+VPS+${selectedPlan.ram}&price=${selectedPlan.price}`} 
-            className="block text-center w-full mt-4 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 rounded-lg shadow-[0_0_20px_rgba(202,138,4,0.4)] transition-all"
+            className="block text-center w-full mt-6 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all"
           >
-            Pre-Order {selectedPlan.ram} Plan (${selectedPlan.price}) →
+            Continue with {selectedPlan.ram} Plan (${selectedPlan.price}) →
           </Link>
         </div>
       </div>

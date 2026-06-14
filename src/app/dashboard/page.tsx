@@ -3,19 +3,33 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
 function ServerCard({ server }: { server: any }) {
+  const [isRestarting, setIsRestarting] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
+  const handleRestart = () => {
+    setIsRestarting(true);
+    setTimeout(() => {
+      setIsRestarting(false);
+    }, 3000);
+  };
+
   return (
-    <div className="bg-[#10141F] border border-yellow-500/30 rounded-xl p-6 shadow-xl relative overflow-hidden group">
+    <div className="bg-[#10141F] border border-[#1E2538] rounded-xl p-6 shadow-xl relative overflow-hidden group">
       
       {/* Status Indicator */}
       <div className="absolute top-6 right-6 flex items-center gap-2">
         <span className="relative flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+          {isRestarting ? (
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+          ) : (
+            <>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </>
+          )}
         </span>
-        <span className="text-xs font-bold uppercase tracking-wider text-yellow-500">
-          Provisioning (48H Queue)
+        <span className={`text-xs font-bold uppercase tracking-wider ${isRestarting ? 'text-yellow-500' : 'text-green-400'}`}>
+          {isRestarting ? 'Restarting...' : 'Online'}
         </span>
       </div>
 
@@ -30,36 +44,42 @@ function ServerCard({ server }: { server: any }) {
           <h3 className="text-xl font-bold text-white mb-1">{server.name}</h3>
           <div className="flex items-center gap-4 text-xs">
             <span className="text-blue-400 font-semibold bg-blue-900/20 px-2 py-1 rounded">{server.plan}</span>
-            <span className="text-gray-400 font-mono">Assigning IP...</span>
+            <span className="text-gray-400 font-mono">{server.ip}</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6 opacity-50">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-[#0C1018] rounded-lg p-4 border border-[#1E2538]">
           <div className="text-gray-500 text-[10px] uppercase tracking-widest mb-1">CPU Usage</div>
-          <div className="text-lg font-bold text-white">---</div>
+          <div className="text-lg font-bold text-white">{isRestarting ? '---' : server.cpu_usage}</div>
         </div>
         <div className="bg-[#0C1018] rounded-lg p-4 border border-[#1E2538]">
           <div className="text-gray-500 text-[10px] uppercase tracking-widest mb-1">RAM Usage</div>
-          <div className="text-lg font-bold text-white">---</div>
+          <div className="text-lg font-bold text-white">{isRestarting ? '---' : server.ram_usage}</div>
         </div>
         <div className="bg-[#0C1018] rounded-lg p-4 border border-[#1E2538]">
           <div className="text-gray-500 text-[10px] uppercase tracking-widest mb-1">Uptime</div>
-          <div className="text-lg font-bold text-white">Queued</div>
+          <div className="text-lg font-bold text-white">{isRestarting ? '0m' : server.uptime}</div>
         </div>
       </div>
 
-      <div className="bg-yellow-500/10 p-4 rounded-lg border border-yellow-500/30 mb-6">
-        <p className="text-sm text-yellow-200/80">
-          <strong className="text-yellow-400">High Demand Alert:</strong> Your server is currently in the deployment queue. You will receive an email with your Pterodactyl login and server IP address within 48 hours. Thank you for your patience!
-        </p>
-      </div>
+      {showSettings ? (
+        <div className="bg-[#0C1018] p-4 rounded-lg border border-[#1E2538] mb-4">
+          <p className="text-sm text-gray-400 mb-4">Server settings will be available here once Phase 5 is complete.</p>
+          <button 
+            onClick={() => setShowSettings(false)}
+            className="bg-[#1E2538] hover:bg-[#2A344B] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors border border-[#2A344B]"
+          >
+            Close Settings
+          </button>
+        </div>
+      ) : null}
 
       <div className="flex gap-4">
         <button 
-          disabled
-          className="flex-1 bg-[#635BFF]/50 text-white/50 font-bold py-3 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed"
+          onClick={() => window.open('https://panel.viberival.com', '_blank')}
+          className="flex-1 bg-[#635BFF] hover:bg-[#5249EC] text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(99,91,255,0.3)] transition-colors flex items-center justify-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -67,14 +87,15 @@ function ServerCard({ server }: { server: any }) {
           Open Panel
         </button>
         <button 
-          disabled
-          className="bg-[#1E2538] text-white/50 font-semibold px-6 py-3 rounded-lg border border-[#2A344B] cursor-not-allowed"
+          onClick={handleRestart}
+          disabled={isRestarting}
+          className="bg-[#1E2538] hover:bg-[#2A344B] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-lg transition-colors border border-[#2A344B]"
         >
-          Restart
+          {isRestarting ? 'Restarting...' : 'Restart'}
         </button>
         <button 
-          disabled
-          className="bg-[#1E2538] text-white/50 font-semibold px-6 py-3 rounded-lg border border-[#2A344B] cursor-not-allowed"
+          onClick={() => setShowSettings(!showSettings)}
+          className="bg-[#1E2538] hover:bg-[#2A344B] text-white font-semibold px-6 py-3 rounded-lg transition-colors border border-[#2A344B]"
         >
           Settings
         </button>
